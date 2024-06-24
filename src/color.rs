@@ -188,7 +188,10 @@ pub fn min_max_luminance<T: ColorRgba8>(block: &[T]) -> (T, T) {
     let mut max = block[0];
     let mut min = block[0];
 
+    let mut alpha = false;
+
     for p in block {
+        if p.alpha() < 128 { alpha = true; }
         let lum = p.luminance();
         if lum > max_lum {
             max_lum = lum;
@@ -199,8 +202,15 @@ pub fn min_max_luminance<T: ColorRgba8>(block: &[T]) -> (T, T) {
             min = *p;
         }
     }
-
-    (min, max)
+    if !alpha {
+        if min.to_565() == max.to_565() {
+            (T::default(), max)
+        } else {
+            (min, max)
+        }
+    } else {
+        (max, min)
+    }
 }
 
 pub trait ColorRed8: Copy + Clone + Default {

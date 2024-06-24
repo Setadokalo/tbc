@@ -5,10 +5,16 @@ pub(in crate) fn ceil_div_4(x: usize) -> usize {
 }
 
 pub(in crate) fn encode_color_table_bc1_bc3<T: ColorRgba8>(block: &[T], ref_colors: [T; 4]) -> u32 {
+    let is_transparent = ref_colors[0].to_565() < ref_colors[1].to_565();
+    let ref_colors = if is_transparent {
+        &ref_colors[0..4]
+    } else {
+        &ref_colors[0..3]
+    };
     // Find color indices and pack result.
     let mut color_indices = [0; 16];
     for (p, color_index) in block.iter().zip(color_indices.iter_mut()) {
-        if T::contains_alpha() && p.alpha() < 128 {
+        if is_transparent && p.alpha() < 128 {
             // Map to black.
             *color_index = 3;
         } else {
@@ -24,7 +30,7 @@ pub(in crate) fn encode_color_table_bc1_bc3<T: ColorRgba8>(block: &[T], ref_colo
     }
 
     let mut color_table = 0;
-    for (i, index) in color_indices.iter().enumerate() {
+    for (i, index) in color_indices.iter().rev().enumerate() {
         color_table |= (*index as u32) << (i << 1);
     }
 

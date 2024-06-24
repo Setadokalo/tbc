@@ -27,10 +27,10 @@ fn min_max_colors<T: ColorRgba8>(block: &[T]) -> MinMax<T> {
         }
     } else {
         MinMax {
-            min_565: max_565,
-            max_565: min_565,
-            min: max,
-            max: min,
+            min,
+            min_565,
+            max,
+            max_565,
             can_contain_alpha: true,
         }
     }
@@ -52,8 +52,7 @@ pub fn encode_block_bc1<T: ColorRgba8>(block: [T; 16]) -> Block8 {
         max_565,
         can_contain_alpha,
     } = min_max_colors(&block);
-
-    let (color2, color3) = if T::contains_alpha() && can_contain_alpha {
+    let (color2, color3) = if max_565 <= min_565 {
         (max.mix_1_1_over_2_saturate(&min), T::default())
     } else {
         (
